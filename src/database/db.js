@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 require("dotenv").config();
 
-const MONGO_URI = "mongodb+srv://trupal0025:2MRRP5oAEi1hb9Xq@cluster0.ytcxt.mongodb.net/demo?retryWrites=true&w=majority&appName=Cluster0";
+const MONGO_URI = process.env.MONGO_URI;
 
 const options = {
   dbName: "demo",
