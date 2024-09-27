@@ -21,7 +21,7 @@ const AddTodo = async (req, res) => {
     // Respond with success and return the newly created Todo
     res.status(201).json({
       success: true,
-      message: "Todo added successfully.",
+      message: "Todo added successfully.Enjoy",
       todo: newTodo,
     });
   } catch (err) {
