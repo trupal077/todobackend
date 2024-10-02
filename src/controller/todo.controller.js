@@ -2,32 +2,27 @@ const Todo = require("../model/todo.model");
 
 const AddTodo = async (req, res) => {
   try {
-    // Validate the request body
-    const { todo_name, completed, status } = req.body;
+    const { todo_name, completed } = req.body;
+
     if (!todo_name) {
-      return res.status(400).json({
-        success: false,
-        message: "Todo todo_name is required.",
-      });
+      return res.status(400).json({ message: "Todo name is required" });
     }
 
     const newTodo = new Todo({
       todo_name,
       completed: completed || false,
+      user: req.user._id, // Associate the todo with the authenticated user
     });
 
     await newTodo.save();
 
-    // Respond with success and return the newly created Todo
     res.status(201).json({
       success: true,
-      message: "Todo added successfully.Enjoy",
+      message: "Todo added successfully.",
       todo: newTodo,
     });
   } catch (err) {
     console.error("Error adding Todo:", err);
-
-    // Respond with an error message
     res.status(500).json({
       success: false,
       message: "An error occurred while adding the todo.",
@@ -37,9 +32,11 @@ const AddTodo = async (req, res) => {
 
 const GetTodos = async (req, res) => {
   try {
-    // Fetch todos and sort by creation date in descending order
-    const todos = await Todo.find().sort({ createdAt: -1 }); // Sorts by 'createdAt' field in descending order
-    res.status(200).json(todos); // Send only the todos data
+    const todos = await Todo.find({ user: req.user._id }).sort({
+      createdAt: -1,
+    });
+
+    res.status(200).json(todos);
   } catch (err) {
     console.error("Error fetching Todos:", err);
     res.status(500).json({
@@ -51,33 +48,27 @@ const GetTodos = async (req, res) => {
 
 const UpdateTodo = async (req, res) => {
   try {
-    const { id } = req.params; // Get the Todo ID from the request params
-    const { completed } = req.body; // Get the completed status from the request body
+    const { id } = req.params;
+    const { completed } = req.body;
 
-    // Check if completed is provided and is a boolean
-    if (typeof completed !== 'boolean') {
+    if (typeof completed !== "boolean") {
       return res.status(400).json({
         success: false,
         message: "Completed status must be a boolean.",
       });
     }
 
-    // Find the Todo by ID and update the completed status
-    const updatedTodo = await Todo.findByIdAndUpdate(
-      id,
-      { completed }, // Only update the completed field
-      { new: true } // Return the updated document
-    );
+    const todo = await Todo.findOne({ _id: id, user: req.user._id });
 
-    // Check if the Todo was found
-    if (!updatedTodo) {
-      return res.status(404).json({
-        success: false,
-        message: "Todo not found.",
-      });
+    if (!todo) {
+      return res
+        .status(404)
+        .json({ message: "Todo not found or unauthorized" });
     }
 
-    // Return the updated Todo
+    todo.completed = completed;
+    const updatedTodo = await todo.save();
+
     res.status(200).json({
       success: true,
       message: "Todo completed status updated successfully.",
@@ -85,8 +76,6 @@ const UpdateTodo = async (req, res) => {
     });
   } catch (err) {
     console.error("Error updating Todo:", err);
-
-    // Respond with an error message
     res.status(500).json({
       success: false,
       message: "An error occurred while updating the todo.",
@@ -94,32 +83,26 @@ const UpdateTodo = async (req, res) => {
   }
 };
 
-
 const DeleteTodo = async (req, res) => {
   try {
-    const { id } = req.params; // Get the Todo ID from the request params
+    const { id } = req.params;
 
-    // Find the Todo by ID and delete it
-    const deletedTodo = await Todo.findByIdAndDelete(id);
+    const todo = await Todo.findOneAndDelete({ _id: id, user: req.user._id }); // Find by ID and user
 
-    // Check if the Todo was found and deleted
-    if (!deletedTodo) {
+    if (!todo) {
       return res.status(404).json({
         success: false,
-        message: "Todo not found.",
+        message: "Todo not found or unauthorized",
       });
     }
 
-    // Return success if the Todo was deleted
     res.status(200).json({
       success: true,
       message: "Todo deleted successfully.",
-      todo: deletedTodo,
+      todo,
     });
   } catch (err) {
     console.error("Error deleting Todo:", err);
-
-    // Respond with an error message
     res.status(500).json({
       success: false,
       message: "An error occurred while deleting the todo.",

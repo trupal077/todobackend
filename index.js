@@ -1,7 +1,7 @@
 require("dotenv").config(); // To load environment variables
 
 const express = require("express");
-const cors = require("cors"); 
+const cors = require("cors");
 const {
   AddTodo,
   UpdateTodo,
@@ -10,30 +10,37 @@ const {
 } = require("./src/controller/todo.controller");
 const connectToDatabase = require("./src/database/db");
 const { login, register } = require("./src/controller/auth.controller");
+const { verifyToken } = require("./src/middleware/auth.middleware");
+
 const app = express();
+const router = express.Router(); // Use router
 
-app.use(cors()); 
-
-// Middleware to parse JSON and URL-encoded data
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(cors());
+app.use(express.json()); // Middleware to parse JSON
+app.use(express.urlencoded({ extended: true })); // For URL-encoded data
 
 // Connect to MongoDB
 connectToDatabase();
 
-// Routes
-app.get("/", (req, res) => {
+// Routes defined using router
+router.get("/", (req, res) => {
   res.send("Hello World");
 });
 
-app.post("/api/login", login);
-app.post("/api/register", register);
+// Authentication routes
+router.post("/api/login", login);
+router.post("/api/register", register);
 
-app.post("/api/addTodo", AddTodo);
-app.get("/api/todos", GetTodos);
-app.put("/api/todos/:id", UpdateTodo);
-app.delete("/api/todos/:id", DeleteTodo);
+// Todo routes
+router.post("/api/addTodo", verifyToken, AddTodo);
+router.get("/api/todos", verifyToken, GetTodos);
+router.post("/api/todos/:id", verifyToken, UpdateTodo);
+router.delete("/api/todos/:id", verifyToken, DeleteTodo);
 
+// Attach the router to the app
+app.use(router);
+
+// Start the server
 app.listen(5000, () => {
   console.log("App listening at port 5000");
 });
