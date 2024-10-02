@@ -9,6 +9,7 @@ const {
   GetTodos,
 } = require("./src/controller/todo.controller");
 const connectToDatabase = require("./src/database/db");
+const { login, register } = require("./src/controller/auth.controller");
 const app = express();
 
 app.use(cors()); 
@@ -24,6 +25,9 @@ connectToDatabase();
 app.get("/", (req, res) => {
   res.send("Hello World");
 });
+
+app.post("/api/login", login);
+app.post("/api/register", register);
 
 app.post("/api/addTodo", AddTodo);
 app.get("/api/todos", GetTodos);
